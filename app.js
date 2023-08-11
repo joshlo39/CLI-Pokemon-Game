@@ -16,7 +16,6 @@ import axios from 'axios';
 const resolveAnimations = (ms = 500) => new Promise((resolve) => setTimeout(resolve, ms));
 const spinner = createSpinner('process loading. . .')
 const pokeApi = 'https://pokeapi.co/api/v2/';
-let pokeBall = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
 
 
 
@@ -107,7 +106,6 @@ async function randomPokemon(selectedPokemon){
 
     const body = await got(opponent.pictureFront).buffer();
     console.log(await terminalImage.buffer(body))
-    
     console.log(`Prepare to battle!`)
     await battleSequence(opponent, selectedPokemon);
 }
@@ -118,7 +116,7 @@ async function battleSequence(opponent, selectedPokemon) {
     await opponent.fetchData();
     await selectedPokemon.fetchData();
 
-    console.log(`${chalk.bgGray(`${selectedPokemon.name} HP: ${selectedPokemon.hp} \t\t\t\t ${opponent.name} HP: ${opponent.hp}`)}`)
+
     const answers = await inquirer.prompt({
         name: 'battle',
         type: 'list',
@@ -165,7 +163,7 @@ async function attack(opponent, selectedPokemon) {
         }else{
             
             console.log(`${opponent.name} has ${opponent.hp} health left!`)
-            await opponentsAttack(opponent, selectedPokemon);
+            await opponentsTurn(opponent, selectedPokemon);
         }
         
     }
@@ -182,123 +180,11 @@ async function attack(opponent, selectedPokemon) {
         }else{
             console.log(`${opponent.name} has ${opponent.hp} health left!`)
             console.log(`${chalk.bgYellow(`${opponent.name} is ATTACKING`)}`)
-            await opponentsAttack(opponent, selectedPokemon);
+            await opponentsTurn(opponent, selectedPokemon);
         }
     }
-}
-
-async function opponentsAttack(opponent, selectedPokemon) {
-    
-    console.log(`${chalk.bgGray(`${selectedPokemon.name} HP: ${selectedPokemon.hp} \t\t\t\t ${opponent.name} HP: ${opponent.hp}`)}`)
-    console.log(`${opponent.name} can use ${opponent.attack1} or ${opponent.attack2}`)
-    //spinner
-    const randomAttack = Math.floor(Math.random() * 2) + 1;
-    if (randomAttack == 1){
-        console.log(`${chalk.bgRed(`${opponent.name} used ${opponent.attack1}`)}`)
-        await opponentStrikes1(opponent, selectedPokemon);
-    }
-    else{
-        console.log(`${chalk.bgRed(`${opponent.name} used ${opponent.attack2}`)}`)
-        await opponentStrikes2(opponent, selectedPokemon);
-    }
-}
-
-async function opponentStrikes1(opponent, selectedPokemon) {
-    await opponent.getAttackPower1();
-    console.log(`${trainerPokemon} lost ${opponent.attackPower1} health!`)
-    //subtract power of that move from the oppeonent's health
-    selectedPokemon.hp = selectedPokemon.hp - opponent.attackPower1;
-    if(selectedPokemon.hp <= 0){
-        console.log(`${trainerPokemon} has fainted!`)
-        console.log(`${chalk.bgRed(`${opponent.name} has won the battle!`)}`)
-    }else{
-        await userTurn2(opponent, selectedPokemon);
-    }
 
 }
-async function opponentStrikes2(opponent, selectedPokemon) {
-    await opponent.getAttackPower2();
-    console.log(`${trainerPokemon} lost ${opponent.attackPower2} health!`)
-    //subtract power of that move from the oppeonent's health
-    selectedPokemon.hp = selectedPokemon.hp - opponent.attackPower2;
-    if(selectedPokemon.hp <= 0){
-        console.log(`${trainerPokemon} has fainted!`)
-        console.log(`${chalk.bgRed(`${opponent.name} has won the battle!`)}`)
-    }else{
-        //await userTurn2(opponent, selectedPokemon);
-        await userTurn2(opponent, selectedPokemon);
-    }
-
-}
-//both players have attacked, now it's the user's turn again
-async function userTurn2(opponent, selectedPokemon) {
-    //print both hps side by side
-    console.log(`${chalk.bgGray(`${selectedPokemon.name} HP: ${selectedPokemon.hp} \t\t\t\t ${opponent.name} HP: ${opponent.hp}`)}`)
-    const answers = await inquirer.prompt({
-        name: 'battle',
-        type: 'list',
-        message: 'What would you like to do?',
-        choices:[
-            {name: `Fight ${opponent.name}`, value: 'Fight'},
-            {name: `Run away`, value: 'Run'}
-        ],
-    });
-    if(answers.battle == 'Fight'){
-        await userAttack2(opponent,selectedPokemon);
-    }
-    else{
-        console.log(`${chalk.bgRed(`You ran away from ${opponent.name}`)}`)
-    }
-}
-async function userAttack2(opponent, selectedPokemon) {
-        
-        const answers = await inquirer.prompt({
-            name: 'attack',
-            type: 'list',
-            message: 'What attack would you like to use?',
-            choices:[
-                {name: `${trainerPokemon} use ${selectedPokemon.attack1}`, value: 'Attack1'},
-                {name: `${trainerPokemon} use ${selectedPokemon.attack2}`, value: 'Attack2'}
-            ],
-        });
-        if(answers.attack == 'Attack1'){
-            
-            console.log(`${trainerPokemon} used ${selectedPokemon.attack1}!`)
-            console.log(`${opponent.name} currently has ${opponent.hp} health!`)
-            await selectedPokemon.getAttackPower1();
-            console.log(`${opponent.name} lost ${selectedPokemon.attackPower1} health!`)
-            //subtract power of that move from the oppeonent's health
-            opponent.hp = opponent.hp - selectedPokemon.attackPower1;
-            if(opponent.hp <= 0){
-                console.log(`${opponent.name} has fainted!`)
-                console.log(`${chalk.bgGreen(`${trainerPokemon} has won the battle!`)}`)
-            }else{
-                
-                console.log(`${opponent.name} has ${opponent.hp} health left!`)
-                await opponentsAttack2(opponent, selectedPokemon);
-            }
-            
-        }
-        else{
-            console.log(`${trainerPokemon} used ${selectedPokemon.attack2}!`)
-            console.log(`${opponent.name} currently has ${opponent.hp} health!`)
-            await selectedPokemon.getAttackPower2();
-            console.log(`${opponent.name} lost ${selectedPokemon.attackPower2} health!`)
-            //subtract power of that move from the oppeonent's health
-            opponent.hp = opponent.hp - selectedPokemon.attackPower1;
-            if(opponent.hp <= 0){
-                console.log(`${opponent.name} has fainted!`)
-                console.log(`${chalk.bgGreen(`${trainerPokemon} has won the battle!`)}`)
-            }else{
-                console.log(`${opponent.name} has ${opponent.hp} health left!`)
-                console.log(`${chalk.bgYellow(`${opponent.name} is ATTACKING`)}`)
-                await opponentsAttack2(opponent, selectedPokemon);
-            }
-        }
-
-}
-
-
 
 
 
